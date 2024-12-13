@@ -1,4 +1,7 @@
 
+#ifndef CAN_DRIVER
+#define CAN_DRIVER
+
 enum BITRATE
 {
     CAN_50KBPS,
@@ -48,3 +51,5 @@ void CANReceive(CAN_msg_t *CAN_rx_msg);
 void CANSetFilters(uint16_t *ids, uint8_t num);
 void CANSetFilter(uint16_t id);
 bool CANInit(BITRATE bitrate, int remap);
+
+#endif //CAN_DRIVER
