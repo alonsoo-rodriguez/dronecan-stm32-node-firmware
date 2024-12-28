@@ -18,9 +18,7 @@ protected:
     CanardCANFrame CAN_rx_msg;
     CanardCANFrame rx_frame;
     uint32_t looptime;
-
-
-
+    bool led_state = false;
 
     struct firmware_update
     {

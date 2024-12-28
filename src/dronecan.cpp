@@ -1,4 +1,5 @@
 #include <dronecan.h>
+
 void DroneCAN::init(CanardOnTransferReception onTransferReceived,
                    CanardShouldAcceptTransfer shouldAcceptTransfer)
 {
@@ -14,10 +15,13 @@ void DroneCAN::init(CanardOnTransferReception onTransferReceived,
     } else {
         Serial.println("Waiting for DNA node allocation\n");
     }
+
+    // initialise the internal LED
+    pinMode(19, OUTPUT);
 }
 
 /*
-Processes any DroneCAN actions required. Call as quickly as particle !
+Processes any DroneCAN actions required. Call as quickly as practical !
 */
 void DroneCAN::cycle()
 {
@@ -29,6 +33,8 @@ void DroneCAN::cycle()
     {
         this->looptime = millis();
         this->process1HzTasks(this->micros64());
+        digitalWrite(19, this->led_state);
+        this->led_state = !this->led_state;
     }
 
 }
