@@ -16,6 +16,23 @@ void DroneCAN::init(CanardOnTransferReception onTransferReceived,
     }
 }
 
+/*
+Processes any DroneCAN actions required. Call as quickly as particle !
+*/
+void DroneCAN::cycle()
+{
+    const uint32_t now = millis();
+    this->processRx();
+    this->processTx();
+    this->request_DNA();
+    if (now - this->looptime > 1000)
+    {
+        this->looptime = millis();
+        this->process1HzTasks(this->micros64());
+    }
+
+}
+
 uint64_t DroneCAN::micros64()
 {
     return (uint64_t)micros();
@@ -503,15 +520,7 @@ void DroneCAN::processTx()
 {
     for (const CanardCANFrame *txf = NULL; (txf = canardPeekTxQueue(&canard)) != NULL;)
     {
-        CAN_TX_msg.id = txf->id;
-        CAN_TX_msg.len = txf->data_len;
-        CAN_TX_msg.format = EXTENDED_FORMAT;
-        for (int i = 0; i < 8; i++)
-        {
-            CAN_TX_msg.data[i] = txf->data[i];
-        }
-
-        CANSend(&CAN_TX_msg);
+        CANSend(txf);
         canardPopTxQueue(&canard); // fuck it we ball
     }
 }
@@ -521,17 +530,7 @@ void DroneCAN::processRx()
     if (CANMsgAvail())
     {
         CANReceive(&CAN_rx_msg);
-
         const uint64_t timestamp = micros();
-        rx_frame.data_len = CAN_rx_msg.len;
-        rx_frame.id = CAN_rx_msg.id;
-        int i = 0;
-
-        for (int i = 0; i < 8; i++)
-        {
-            rx_frame.data[i] = CAN_rx_msg.data[i];
-        }
-
-        int ret = canardHandleRxFrame(&canard, &rx_frame, timestamp);
+        int ret = canardHandleRxFrame(&canard, &CAN_rx_msg, timestamp);
     }
 }

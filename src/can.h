@@ -1,6 +1,7 @@
 
 #ifndef CAN_DRIVER
 #define CAN_DRIVER
+#include <canard.h>
 
 enum BITRATE
 {
@@ -12,15 +13,15 @@ enum BITRATE
     CAN_1000KBPS
 };
 
-struct CAN_msg_t
-{
-    uint32_t id;     /* 29 bit identifier                               */
-    uint8_t data[8]; /* Data field                                      */
-    uint8_t len;     /* Length of data field in bytes                   */
-    uint8_t ch;      /* Object channel(Not use)                         */
-    uint8_t format;  /* 0 - STANDARD, 1- EXTENDED IDENTIFIER            */
-    uint8_t type;    /* 0 - DATA FRAME, 1 - REMOTE FRAME                */
-};
+// struct CAN_msg_t
+// {
+//     uint32_t id;     /* 29 bit identifier                               */
+//     uint8_t data[8]; /* Data field                                      */
+//     uint8_t len;     /* Length of data field in bytes                   */
+//     uint8_t ch;      /* Object channel(Not use)                         */
+//     uint8_t format;  /* 0 - STANDARD, 1- EXTENDED IDENTIFIER            */
+//     uint8_t type;    /* 0 - DATA FRAME, 1 - REMOTE FRAME                */
+// };
 
 struct CAN_bit_timing_config_t
 {
@@ -46,8 +47,8 @@ enum
 extern CAN_bit_timing_config_t can_configs[6];
 
 uint8_t CANMsgAvail(void);
-void CANSend(CAN_msg_t *CAN_tx_msg);
-void CANReceive(CAN_msg_t *CAN_rx_msg);
+void CANSend(const CanardCANFrame *CAN_tx_msg);
+void CANReceive(CanardCANFrame *CAN_rx_msg);
 void CANSetFilters(uint16_t *ids, uint8_t num);
 void CANSetFilter(uint16_t id);
 bool CANInit(BITRATE bitrate, int remap);

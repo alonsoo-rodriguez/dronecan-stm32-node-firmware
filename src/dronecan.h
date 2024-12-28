@@ -14,9 +14,10 @@ class DroneCAN
 protected:
     uint8_t memory_pool[1024];
     struct uavcan_protocol_NodeStatus node_status;
-    CAN_msg_t CAN_TX_msg;
-    CAN_msg_t CAN_rx_msg;
+    CanardCANFrame CAN_TX_msg;
+    CanardCANFrame CAN_rx_msg;
     CanardCANFrame rx_frame;
+    uint32_t looptime;
 
 
 
@@ -65,6 +66,7 @@ public:
     void process1HzTasks(uint64_t timestamp_usec);
     void processTx();
     void processRx();
+    void cycle();
     
     struct dynamic_node_allocation{
         uint32_t send_next_node_id_allocation_request_at_ms;

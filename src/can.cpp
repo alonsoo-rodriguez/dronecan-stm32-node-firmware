@@ -259,31 +259,29 @@ bool CANInit(BITRATE bitrate, int remap)
  * @params CAN_rx_msg - CAN message structure for reception
  *
  */
-void CANReceive(CAN_msg_t *CAN_rx_msg)
+void CANReceive(CanardCANFrame *CAN_rx_msg)
 {
     uint32_t id = CAN1->sFIFOMailBox[0].RIR;
     if ((id & STM32_CAN_RIR_IDE) == 0)
     { // Standard frame format
-        CAN_rx_msg->format = STANDARD_FORMAT;
         CAN_rx_msg->id = (CAN_STD_ID_MASK & (id >> 21));
     }
     else
     { // Extended frame format
-        CAN_rx_msg->format = EXTENDED_FORMAT;
         CAN_rx_msg->id = (CAN_EXT_ID_MASK & (id >> 3));
         CAN_rx_msg->id |= 1U << 31; // https://github.com/ArduPilot/ardupilot/blob/4d31a7320a1d2c38e2d742ae63c34f914febaa8f/libraries/AP_HAL_ChibiOS/CanIface.cpp#L570
     }
 
     if ((id & STM32_CAN_RIR_RTR) == 0)
     { // Data frame
-        CAN_rx_msg->type = DATA_FRAME;
+        // CAN_rx_msg->type = DATA_FRAME;
     }
     else
     { // Remote frame
-        CAN_rx_msg->type = REMOTE_FRAME;
+        // CAN_rx_msg->type = REMOTE_FRAME;
     }
 
-    CAN_rx_msg->len = (CAN1->sFIFOMailBox[0].RDTR) & 0xFUL;
+    CAN_rx_msg->data_len = (CAN1->sFIFOMailBox[0].RDTR) & 0xFUL;
 
     CAN_rx_msg->data[0] = 0xFFUL & CAN1->sFIFOMailBox[0].RDLR;
     CAN_rx_msg->data[1] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 8);
@@ -306,28 +304,30 @@ void CANReceive(CAN_msg_t *CAN_rx_msg)
  * @params CAN_tx_msg - CAN message structure for transmission
  *
  */
-void CANSend(CAN_msg_t *CAN_tx_msg)
+void CANSend(const CanardCANFrame *CAN_tx_msg)
 {
     volatile int count = 0;
 
     uint32_t out = 0;
-    if (CAN_tx_msg->format == EXTENDED_FORMAT)
-    { // Extended frame format
-        out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
-    }
-    else
-    { // Standard frame format
+    if ((CAN_tx_msg->id & STM32_CAN_RIR_IDE) == 0)
+    {
+        // standard frame format
         out = ((CAN_tx_msg->id & CAN_STD_ID_MASK) << 21U);
     }
-
-    // Remote frame
-    if (CAN_tx_msg->type == REMOTE_FRAME)
+    else
     {
-        out |= STM32_CAN_TIR_RTR;
+        // extended frame format
+        out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
     }
 
+    // // Remote frame
+    // if (CAN_tx_msg->type == REMOTE_FRAME)
+    // {
+    //     out |= STM32_CAN_TIR_RTR;
+    // }
+
     CAN1->sTxMailBox[0].TDTR &= ~(0xF);
-    CAN1->sTxMailBox[0].TDTR |= CAN_tx_msg->len & 0xFUL;
+    CAN1->sTxMailBox[0].TDTR |= CAN_tx_msg->data_len & 0xFUL;
 
     CAN1->sTxMailBox[0].TDLR = (((uint32_t)CAN_tx_msg->data[3] << 24) |
                                 ((uint32_t)CAN_tx_msg->data[2] << 16) |
@@ -342,8 +342,7 @@ void CANSend(CAN_msg_t *CAN_tx_msg)
     CAN1->sTxMailBox[0].TIR = out | STM32_CAN_TIR_TXRQ;
 
     // Wait until the mailbox is empty
-    while (CAN1->sTxMailBox[0].TIR & 0x1UL && count++ < 1000000)
-        ;
+    while (CAN1->sTxMailBox[0].TIR & 0x1UL && count++ < 1000000);
 
     // The mailbox don't becomes empty while loop
     if (CAN1->sTxMailBox[0].TIR & 0x1UL)

@@ -19,21 +19,9 @@ void setup()
     dronecan.init(onTransferReceived, shouldAcceptTransfer);
 }
 
-uint32_t looptime = 0;
-
 void loop()
 {
-
-    const uint32_t now = millis();
-    dronecan.processRx();
-    dronecan.processTx();
-    dronecan.request_DNA();
-
-    if (now - looptime > 1000)
-    {
-        looptime = millis();
-        dronecan.process1HzTasks(dronecan.micros64());
-    }
+    dronecan.cycle();
 }
 
 /*
@@ -106,33 +94,12 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
     }
 }
 
-/*
- This callback is invoked by the library when it detects beginning of a new transfer on the bus that can be received
- by the local node.
- If the callback returns true, the library will receive the transfer.
- If the callback returns false, the library will ignore the transfer.
- All transfers that are addressed to other nodes are always ignored.
-
- This function must fill in the out_data_type_signature to be the signature of the message.
- */
 bool shouldAcceptTransfer(const CanardInstance *ins,
                           uint64_t *out_data_type_signature,
                           uint16_t data_type_id,
                           CanardTransferType transfer_type,
                           uint8_t source_node_id)
-{
-    if (transfer_type == CanardTransferTypeRequest)
-    {
-        // check if we want to handle a specific service request
-        switch (data_type_id)
-        {
-        case UAVCAN_PROTOCOL_GETNODEINFO_ID:
-        {
-            *out_data_type_signature = UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_SIGNATURE;
-            return true;
-        }
-        }
-    }
-    // we don't want any other messages
+{   // see https://github.com/dronecan/libcanard/blob/6f74bc67656882a4ee51966c7c0022d04fa1a3fb/examples/ServoNode/servo_node.c#L664
+    // for how to use properly
     return true;
 }
