@@ -13,7 +13,7 @@ DroneCAN dronecan;
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("HElloW");
+    Serial.println("Node Start");
 
     CANInit(CAN_1000KBPS, 2);
     dronecan.init(onTransferReceived, shouldAcceptTransfer);
@@ -25,7 +25,8 @@ void loop()
 }
 
 /*
- This callback is invoked by the library when a new message or request or response is received.
+This function is called when we receive a CAN message, and it's accepted by the shouldAcceptTransfer function.
+We need to do boiler plate code in here to handle parameter updates and so on, but you can also write code to interact with sent messages here.
 */
 void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
 {
