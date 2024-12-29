@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <can.h>
 #include <dronecan.h>
+#include <IWatchdog.h>
 
 static bool shouldAcceptTransfer(const CanardInstance *ins,
                                  uint64_t *out_data_type_signature,
@@ -15,13 +15,15 @@ void setup()
     Serial.begin(115200);
     Serial.println("Node Start");
 
-    CANInit(CAN_1000KBPS, 2);
     dronecan.init(onTransferReceived, shouldAcceptTransfer);
+
+    IWatchdog.begin(2000000); // if the loop takes longer than 2 seconds, reset the system
 }
 
 void loop()
 {
     dronecan.cycle();
+    IWatchdog.reload();
 }
 
 /*
@@ -64,9 +66,8 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
         }
         }
     }
-
     // switch on data type ID to pass to the right handler function
-    if (transfer->transfer_type == CanardTransferTypeRequest)
+    else if (transfer->transfer_type == CanardTransferTypeRequest)
     {
         // check if we want to handle a specific service request
         switch (transfer->data_type_id)
@@ -75,6 +76,10 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
         {
             dronecan.handle_GetNodeInfo(transfer);
             break;
+        }
+        case UAVCAN_PROTOCOL_RESTARTNODE_ID:
+        {
+            while(1){}; // force the watchdog to reset
         }
         case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
         {
@@ -95,6 +100,15 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
     }
 }
 
+/*
+ This callback is invoked by the library when it detects beginning of a new transfer on the bus that can be received
+ by the local node.
+ If the callback returns true, the library will receive the transfer.
+ If the callback returns false, the library will ignore the transfer.
+ All transfers that are addressed to other nodes are always ignored.
+
+ This function must fill in the out_data_type_signature to be the signature of the message.
+ */
 bool shouldAcceptTransfer(const CanardInstance *ins,
                           uint64_t *out_data_type_signature,
                           uint16_t data_type_id,

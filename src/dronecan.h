@@ -4,6 +4,7 @@
 #include <dronecan_msgs.h>
 #include <Arduino.h>
 #include <can.h>
+#include <EEPROM.h>
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define C_TO_KELVIN(temp) (temp + 273.15f)
@@ -43,18 +44,25 @@ public:
     void init(CanardOnTransferReception onTransferReceived, CanardShouldAcceptTransfer shouldAcceptTransfer);
     int node_id = 0;
     int preferred_node_id = 69;
+
     CanardInstance canard;
-    parameter parameters[4] = {
-        {"CAN_NODE", UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE, 0, 0, 127},
-        {"MyPID_P", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 1.2, 0.1, 5.0},
-        {"MyPID_I", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 1.35, 0.1, 5.0},
-        {"MyPID_D", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.025, 0.001, 1.0},
+    parameter parameters[8] = {
+        {"NODEID", UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE, 0, 127, 69},
+        {"PARM_1", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 1.0},
+        {"PARM_2", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 2.0},
+        {"PARM_3", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 3.0},
+        {"PARM_4", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 4.0},
+        {"PARM_5", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 5.0},
+        {"PARM_6", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 6.0},
+        {"PARM_7", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 7.0},
     };
+    
     static uint64_t micros64();
     static void getUniqueID(uint8_t id[16]);
     void handle_GetNodeInfo(CanardRxTransfer* transfer);
     void handle_param_GetSet(CanardRxTransfer* transfer);
     void handle_param_ExecuteOpcode(CanardRxTransfer* transfer);
+    void read_parameter_memory();
     int handle_DNA_Allocation(CanardRxTransfer *transfer);
     void request_DNA();
     void handle_begin_firmware_update(CanardRxTransfer* transfer);

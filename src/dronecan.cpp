@@ -1,8 +1,10 @@
 #include <dronecan.h>
 
 void DroneCAN::init(CanardOnTransferReception onTransferReceived,
-                   CanardShouldAcceptTransfer shouldAcceptTransfer)
+                    CanardShouldAcceptTransfer shouldAcceptTransfer)
 {
+    CANInit(CAN_1000KBPS, 2);
+
     canardInit(&canard,
                memory_pool,
                sizeof(memory_pool),
@@ -10,14 +12,20 @@ void DroneCAN::init(CanardOnTransferReception onTransferReceived,
                shouldAcceptTransfer,
                NULL);
 
-    if (node_id > 0) {
+    if (node_id > 0)
+    {
         canardSetLocalNodeID(&canard, node_id);
-    } else {
+    }
+    else
+    {
         Serial.println("Waiting for DNA node allocation\n");
     }
 
     // initialise the internal LED
     pinMode(19, OUTPUT);
+
+    // get the parameters in the EEPROM
+    this->read_parameter_memory();
 }
 
 /*
@@ -36,7 +44,6 @@ void DroneCAN::cycle()
         digitalWrite(19, this->led_state);
         this->led_state = !this->led_state;
     }
-
 }
 
 uint64_t DroneCAN::micros64()
@@ -91,7 +98,7 @@ void DroneCAN::handle_GetNodeInfo(CanardRxTransfer *transfer)
 
     getUniqueID(pkt.hardware_version.unique_id);
 
-    strncpy((char *)pkt.name.data, "ServoNode", sizeof(pkt.name.data));
+    strncpy((char *)pkt.name.data, "Beyond Robotix Node", sizeof(pkt.name.data));
     pkt.name.len = strnlen((char *)pkt.name.data, sizeof(pkt.name.data));
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);
@@ -127,6 +134,7 @@ void DroneCAN::handle_param_GetSet(CanardRxTransfer *transfer)
                 strncmp((const char *)req.name.data, parameters[i].name, req.name.len) == 0)
             {
                 p = &parameters[i];
+                req.index = i;
                 break;
             }
         }
@@ -146,9 +154,11 @@ void DroneCAN::handle_param_GetSet(CanardRxTransfer *transfer)
         {
         case UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE:
             p->value = req.value.integer_value;
+            EEPROM.put(req.index * 4, p->value);
             break;
         case UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE:
             p->value = req.value.real_value;
+            EEPROM.put(req.index * 4, p->value);
             break;
         default:
             return;
@@ -232,6 +242,22 @@ void DroneCAN::handle_param_ExecuteOpcode(CanardRxTransfer *transfer)
 }
 
 /*
+Read the EEPROM parameter storage and set the current parameter list to the read values
+*/
+void DroneCAN::read_parameter_memory()
+{
+    struct parameter *p = NULL;
+    float p_val = 0.0;
+
+    for (uint16_t i = 0; i < ARRAY_SIZE(parameters); i++)
+    {
+        EEPROM.get(i*4, p_val);
+        p = &parameters[i];
+        p->value = p_val;
+    }
+}
+
+/*
   handle a DNA allocation packet
  */
 int DroneCAN::handle_DNA_Allocation(CanardRxTransfer *transfer)
@@ -272,7 +298,7 @@ int DroneCAN::handle_DNA_Allocation(CanardRxTransfer *transfer)
         return 0;
     }
 
-    if (false) 
+    if (false)
     //(msg.unique_id.len < sizeof(msg.unique_id.data))
     {
         // The allocator has confirmed part of unique ID, switching to
@@ -338,7 +364,7 @@ void DroneCAN::request_DNA()
     {
         uid_size = MaxLenOfUniqueIDInRequest;
     }
-    if(uid_size + DNA.node_id_allocation_unique_id_offset > 16)
+    if (uid_size + DNA.node_id_allocation_unique_id_offset > 16)
     {
         uid_size = 16 - DNA.node_id_allocation_unique_id_offset;
     }
