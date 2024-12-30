@@ -10,6 +10,8 @@ static bool shouldAcceptTransfer(const CanardInstance *ins,
 static void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer);
 DroneCAN dronecan;
 
+uint32_t looptime = 0;
+
 void setup()
 {
     Serial.begin(115200);
@@ -22,6 +24,34 @@ void setup()
 
 void loop()
 {
+    const uint32_t now = millis();
+
+    // send our battery message at 10Hz
+    if (now - looptime > 100)
+    {
+        looptime = millis();
+        
+        // collect MCU core temperature data
+        int32_t vref = __LL_ADC_CALC_VREFANALOG_VOLTAGE(analogRead(AVREF), LL_ADC_RESOLUTION_12B);
+        int32_t cpu_temp = __LL_ADC_CALC_TEMPERATURE(vref, analogRead(ATEMP), LL_ADC_RESOLUTION_12B);
+
+        // construct dronecan packet
+        uavcan_equipment_power_BatteryInfo pkt {};
+        pkt.temperature = cpu_temp;
+
+        // boilerplate to send a message
+        uint8_t buffer[UAVCAN_EQUIPMENT_POWER_BATTERYINFO_MAX_SIZE];
+        uint32_t len = uavcan_equipment_power_BatteryInfo_encode(&pkt, buffer);
+        static uint8_t transfer_id;
+        canardBroadcast(&dronecan.canard,
+                        UAVCAN_EQUIPMENT_POWER_BATTERYINFO_SIGNATURE,
+                        UAVCAN_EQUIPMENT_POWER_BATTERYINFO_ID,
+                        &transfer_id,
+                        CANARD_TRANSFER_PRIORITY_LOW,
+                        buffer,
+                        len);
+    }
+
     dronecan.cycle();
     IWatchdog.reload();
 }
