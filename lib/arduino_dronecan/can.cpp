@@ -320,11 +320,11 @@ void CANSend(const CanardCANFrame *CAN_tx_msg)
         out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
     }
 
-    // // Remote frame
-    // if (CAN_tx_msg->type == REMOTE_FRAME)
-    // {
-    //     out |= STM32_CAN_TIR_RTR;
-    // }
+    // Remote frame
+    if (CAN_tx_msg->id & STM32_CAN_TIR_RTR)
+    {
+        out |= STM32_CAN_TIR_RTR;
+    }
 
     CAN1->sTxMailBox[0].TDTR &= ~(0xF);
     CAN1->sTxMailBox[0].TDTR |= CAN_tx_msg->data_len & 0xFUL;

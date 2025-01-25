@@ -37,6 +37,7 @@ void loop()
 
         // construct dronecan packet
         uavcan_equipment_power_BatteryInfo pkt {};
+        pkt.voltage = now/10000;
         pkt.temperature = cpu_temp;
 
         // boilerplate to send a message

@@ -48,7 +48,7 @@ public:
     CanardInstance canard;
     parameter parameters[8] = {
         {"NODEID", UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE, 0, 127, 69},
-        {"PARM_1", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 1.0},
+        {"PARM_1S", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 1.0},
         {"PARM_2", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 2.0},
         {"PARM_3", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 3.0},
         {"PARM_4", UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE, 0.0, 0.0, 4.0},
@@ -58,7 +58,7 @@ public:
     };
     
     static uint64_t micros64();
-    static void getUniqueID(uint8_t id[16]);
+    static void getUniqueID(uint8_t* id);
     void handle_GetNodeInfo(CanardRxTransfer* transfer);
     void handle_param_GetSet(CanardRxTransfer* transfer);
     void handle_param_ExecuteOpcode(CanardRxTransfer* transfer);
