@@ -10,7 +10,7 @@
 #define C_TO_KELVIN(temp) (temp + 273.15f)
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-#define PREFERRED_NODE_ID 125
+#define PREFERRED_NODE_ID 69
 
 class DroneCAN
 {
