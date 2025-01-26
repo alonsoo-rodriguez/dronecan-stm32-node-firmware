@@ -303,6 +303,7 @@ int DroneCAN::handle_DNA_Allocation(CanardRxTransfer *transfer)
     }
 
     if (msg.unique_id.len < sizeof(msg.unique_id.data))
+
     {
         // The allocator has confirmed part of unique ID, switching to
         // the next stage and updating the timeout.
@@ -563,13 +564,14 @@ void DroneCAN::processTx()
 
 void DroneCAN::processRx()
 {
+    const uint64_t timestamp = micros();
     if (CANMsgAvail())
     {
         CANReceive(&CAN_rx_msg);
-        const uint64_t timestamp = micros();
         int ret = canardHandleRxFrame(&canard, &CAN_rx_msg, timestamp);
-        if(ret < 0){
-            int a = 1;
+        if (ret < 0)
+        {
+            Serial.print("Canard RX fail"); Serial.println(ret);
         }
     }
 }
