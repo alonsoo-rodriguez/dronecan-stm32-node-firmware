@@ -204,5 +204,6 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
         }
     }
 
+    Serial.println("shouldAcceptTransfer pattern didn't match, please add ID to function");
     return true;
 }
