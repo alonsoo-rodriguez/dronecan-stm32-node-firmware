@@ -637,7 +637,7 @@ int16_t canardHandleRxFrame(CanardInstance* ins, const CanardCANFrame* frame, ui
 
         // CRC validation
         rx_state->calculated_crc = crcAdd((uint16_t)rx_state->calculated_crc, frame->data, frame->data_len - 1U);
-        if (true)//(rx_state->calculated_crc == rx_state->payload_crc)
+        if(rx_state->calculated_crc == rx_state->payload_crc)
         {
             ins->on_reception(ins, &rx_transfer);
         }
