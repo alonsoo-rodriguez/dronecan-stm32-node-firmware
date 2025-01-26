@@ -36,7 +36,8 @@ void loop()
         int32_t cpu_temp = __LL_ADC_CALC_TEMPERATURE(vref, analogRead(ATEMP), LL_ADC_RESOLUTION_12B);
 
         // construct dronecan packet
-        uavcan_equipment_power_BatteryInfo pkt{};
+        uavcan_equipment_power_BatteryInfo pkt {};
+        pkt.voltage = now/10000;
         pkt.temperature = cpu_temp;
 
         // boilerplate to send a message
@@ -146,6 +147,8 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
                           uint16_t data_type_id,
                           CanardTransferType transfer_type,
                           uint8_t source_node_id)
+
+
 {
     if (transfer_type == CanardTransferTypeRequest) {
         // check if we want to handle a specific service request
@@ -189,5 +192,6 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
         }
         }
     }
+
     return true;
 }

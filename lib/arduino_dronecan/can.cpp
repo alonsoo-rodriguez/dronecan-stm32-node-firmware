@@ -287,6 +287,7 @@ uint8_t dlcToDataLength(uint8_t dlc)
 void CANReceive(CanardCANFrame *CAN_rx_msg)
 {
     uint32_t id = CAN1->sFIFOMailBox[0].RIR;
+
     // if ((id & STM32_CAN_RIR_IDE) == 0)
     // { // Standard frame format
     //     CAN_rx_msg->id = (CAN_STD_ID_MASK & (id >> 21));
