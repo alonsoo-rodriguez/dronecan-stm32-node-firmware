@@ -302,8 +302,7 @@ int DroneCAN::handle_DNA_Allocation(CanardRxTransfer *transfer)
         return 0;
     }
 
-    if (false)
-    //(msg.unique_id.len < sizeof(msg.unique_id.data))
+    if (msg.unique_id.len < sizeof(msg.unique_id.data))
     {
         // The allocator has confirmed part of unique ID, switching to
         // the next stage and updating the timeout.

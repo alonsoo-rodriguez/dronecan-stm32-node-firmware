@@ -269,16 +269,12 @@ void CANReceive(CanardCANFrame *CAN_rx_msg)
     else
     { // Extended frame format
         CAN_rx_msg->id = (CAN_EXT_ID_MASK & (id >> 3));
-        CAN_rx_msg->id |= 1U << 31; // https://github.com/ArduPilot/ardupilot/blob/4d31a7320a1d2c38e2d742ae63c34f914febaa8f/libraries/AP_HAL_ChibiOS/CanIface.cpp#L570
+        CAN_rx_msg->id |= CANARD_CAN_FRAME_EFF; // https://github.com/ArduPilot/ardupilot/blob/4d31a7320a1d2c38e2d742ae63c34f914febaa8f/libraries/AP_HAL_ChibiOS/CanIface.cpp#L570
     }
 
-    if ((id & STM32_CAN_RIR_RTR) == 0)
+    if ((id & STM32_CAN_RIR_RTR) != 0)
     { // Data frame
-        // CAN_rx_msg->type = DATA_FRAME;
-    }
-    else
-    { // Remote frame
-        // CAN_rx_msg->type = REMOTE_FRAME;
+        CAN_rx_msg->id |= CANARD_CAN_FRAME_RTR;
     }
 
     CAN_rx_msg->data_len = (CAN1->sFIFOMailBox[0].RDTR) & 0xFUL;
