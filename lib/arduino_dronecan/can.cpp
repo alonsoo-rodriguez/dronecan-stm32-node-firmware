@@ -251,6 +251,31 @@ bool CANInit(BITRATE bitrate, int remap)
 #define CAN_EXT_ID_MASK 0x1FFFFFFFU
 #define CAN_STD_ID_MASK 0x000007FFU
 
+
+uint8_t dlcToDataLength(uint8_t dlc)
+{
+    /*
+    Data Length Code      9  10  11  12  13  14  15
+    Number of data bytes 12  16  20  24  32  48  64
+    */
+    if (dlc <= 8) {
+        return dlc;
+    } else if (dlc == 9) {
+        return 12;
+    } else if (dlc == 10) {
+        return 16;
+    } else if (dlc == 11) {
+        return 20;
+    } else if (dlc == 12) {
+        return 24;
+    } else if (dlc == 13) {
+        return 32;
+    } else if (dlc == 14) {
+        return 48;
+    }
+    return 64;
+}
+
 /**
  * Decodes CAN messages from the data registers and populates a
  * CAN message struct with the data fields.
@@ -262,35 +287,26 @@ bool CANInit(BITRATE bitrate, int remap)
 void CANReceive(CanardCANFrame *CAN_rx_msg)
 {
     uint32_t id = CAN1->sFIFOMailBox[0].RIR;
-    if ((id & STM32_CAN_RIR_IDE) == 0)
-    { // Standard frame format
-        CAN_rx_msg->id = (CAN_STD_ID_MASK & (id >> 21));
-    }
-    else
-    { // Extended frame format
-        CAN_rx_msg->id = (CAN_EXT_ID_MASK & (id >> 3));
-        CAN_rx_msg->id |= 1U << 31; // https://github.com/ArduPilot/ardupilot/blob/4d31a7320a1d2c38e2d742ae63c34f914febaa8f/libraries/AP_HAL_ChibiOS/CanIface.cpp#L570
-    }
+    // if ((id & STM32_CAN_RIR_IDE) == 0)
+    // { // Standard frame format
+    //     CAN_rx_msg->id = (CAN_STD_ID_MASK & (id >> 21));
+    // }
+    // else
+    // { // Extended frame format
+    CAN_rx_msg->id = (CAN_EXT_ID_MASK & (id >> 3));
+    CAN_rx_msg->id |= 1U << 31; // https://github.com/ArduPilot/ardupilot/blob/4d31a7320a1d2c38e2d742ae63c34f914febaa8f/libraries/AP_HAL_ChibiOS/CanIface.cpp#L570
+    // }
 
-    if ((id & STM32_CAN_RIR_RTR) == 0)
-    { // Data frame
-        // CAN_rx_msg->type = DATA_FRAME;
-    }
-    else
-    { // Remote frame
-        // CAN_rx_msg->type = REMOTE_FRAME;
-    }
+    CAN_rx_msg->data_len = dlcToDataLength((CAN1->sFIFOMailBox[0].RDTR) & 0xFUL);
 
-    CAN_rx_msg->data_len = (CAN1->sFIFOMailBox[0].RDTR) & 0xFUL;
-
-    CAN_rx_msg->data[0] = 0xFFUL & CAN1->sFIFOMailBox[0].RDLR;
-    CAN_rx_msg->data[1] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 8);
-    CAN_rx_msg->data[2] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 16);
-    CAN_rx_msg->data[3] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 24);
-    CAN_rx_msg->data[4] = 0xFFUL & CAN1->sFIFOMailBox[0].RDHR;
-    CAN_rx_msg->data[5] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 8);
-    CAN_rx_msg->data[6] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 16);
-    CAN_rx_msg->data[7] = 0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 24);
+    CAN_rx_msg->data[0] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 0));
+    CAN_rx_msg->data[1] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 8));
+    CAN_rx_msg->data[2] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 16));
+    CAN_rx_msg->data[3] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDLR >> 24));
+    CAN_rx_msg->data[4] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 0));
+    CAN_rx_msg->data[5] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 8));
+    CAN_rx_msg->data[6] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 16));
+    CAN_rx_msg->data[7] = uint8_t(0xFFUL & (CAN1->sFIFOMailBox[0].RDHR >> 24));
 
     // Release FIFO 0 output mailbox.
     // Make the next incoming message available.
@@ -309,21 +325,16 @@ void CANSend(const CanardCANFrame *CAN_tx_msg)
     volatile int count = 0;
 
     uint32_t out = 0;
-    if ((CAN_tx_msg->id & STM32_CAN_RIR_IDE) == 0)
-    {
-        // standard frame format
-        out = ((CAN_tx_msg->id & CAN_STD_ID_MASK) << 21U);
-    }
-    else
-    {
-        // extended frame format
-        out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
-    }
-
-    // // Remote frame
-    // if (CAN_tx_msg->type == REMOTE_FRAME)
+    // if ((CAN_tx_msg->id & STM32_CAN_RIR_IDE) == 0)
     // {
-    //     out |= STM32_CAN_TIR_RTR;
+    //     // standard frame format
+    //     out = ((CAN_tx_msg->id & CAN_STD_ID_MASK) << 21U);
+    // }
+    // else
+    // {
+        // extended frame format
+    // force extended frame format
+    out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
     // }
 
     CAN1->sTxMailBox[0].TDTR &= ~(0xF);
