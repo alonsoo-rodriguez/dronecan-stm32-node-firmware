@@ -30,7 +30,7 @@ void loop()
     if (now - looptime > 100)
     {
         looptime = millis();
-        
+
         // collect MCU core temperature data
         int32_t vref = __LL_ADC_CALC_VREFANALOG_VOLTAGE(analogRead(AVREF), LL_ADC_RESOLUTION_12B);
         int32_t cpu_temp = __LL_ADC_CALC_TEMPERATURE(vref, analogRead(ATEMP), LL_ADC_RESOLUTION_12B);
@@ -110,7 +110,9 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
         }
         case UAVCAN_PROTOCOL_RESTARTNODE_ID:
         {
-            while(1){}; // force the watchdog to reset
+            while (1)
+            {
+            }; // force the watchdog to reset
         }
         case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
         {
@@ -145,9 +147,10 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
                           uint16_t data_type_id,
                           CanardTransferType transfer_type,
                           uint8_t source_node_id)
-{   // see https://github.com/dronecan/libcanard/blob/6f74bc67656882a4ee51966c7c0022d04fa1a3fb/examples/ServoNode/servo_node.c#L664
-    // for how to use properly
-  if (transfer_type == CanardTransferTypeRequest) {
+
+
+{
+    if (transfer_type == CanardTransferTypeRequest) {
         // check if we want to handle a specific service request
         switch (data_type_id) {
         case UAVCAN_PROTOCOL_GETNODEINFO_ID: {
@@ -189,6 +192,6 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
         }
         }
     }
-    // we don't want any other messages
-    return false;
+
+    return true;
 }

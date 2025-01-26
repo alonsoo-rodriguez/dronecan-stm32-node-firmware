@@ -53,13 +53,14 @@ uint64_t DroneCAN::micros64()
     return (uint64_t)micros();
 }
 
-void DroneCAN::getUniqueID(uint8_t *id)
+
+void DroneCAN::getUniqueID(uint8_t uniqueId[16])
 {
+    memset(uniqueId, 0, 16);
+
     uint32_t cpuid0 = HAL_GetUIDw0();
     uint32_t cpuid1 = HAL_GetUIDw1();
     uint32_t cpuid2 = HAL_GetUIDw2();
-
-    uint8_t uniqueId[16];
 
     uniqueId[0] = (uint8_t)(cpuid0 >> 24);
     uniqueId[1] = (uint8_t)(cpuid0 >> 16);
@@ -73,8 +74,10 @@ void DroneCAN::getUniqueID(uint8_t *id)
     uniqueId[9] = (uint8_t)(cpuid2 >> 16);
     uniqueId[10] = (uint8_t)(cpuid2 >> 8);
     uniqueId[11] = (uint8_t)(cpuid2);
-
-    memcpy(id, uniqueId, 16); // Copy the unique ID to the array
+    uniqueId[12] = 0;
+    uniqueId[13] = 0;
+    uniqueId[14] = 0;
+    uniqueId[15] = 0;
 }
 
 void DroneCAN::handle_GetNodeInfo(CanardRxTransfer *transfer)
