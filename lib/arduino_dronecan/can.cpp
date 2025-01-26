@@ -304,17 +304,8 @@ void CANSend(const CanardCANFrame *CAN_tx_msg)
 {
     volatile int count = 0;
 
-    uint32_t out = 0;
-    if ((CAN_tx_msg->id & STM32_CAN_RIR_IDE) == 0)
-    {
-        // standard frame format
-        out = ((CAN_tx_msg->id & CAN_STD_ID_MASK) << 21U);
-    }
-    else
-    {
-        // extended frame format
-        out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
-    }
+    uint32_t out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
+
 
     // Remote frame
     if (CAN_tx_msg->id & STM32_CAN_TIR_RTR)

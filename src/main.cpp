@@ -147,5 +147,48 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
                           uint8_t source_node_id)
 {   // see https://github.com/dronecan/libcanard/blob/6f74bc67656882a4ee51966c7c0022d04fa1a3fb/examples/ServoNode/servo_node.c#L664
     // for how to use properly
-    return true;
+  if (transfer_type == CanardTransferTypeRequest) {
+        // check if we want to handle a specific service request
+        switch (data_type_id) {
+        case UAVCAN_PROTOCOL_GETNODEINFO_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_GETSET_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_SIGNATURE;
+            return true;
+        }
+	case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID: {
+	    *out_data_type_signature = UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_SIGNATURE;
+	    return true;
+	}
+        }
+    }
+    if (transfer_type == CanardTransferTypeResponse) {
+        // check if we want to handle a specific service request
+        switch (data_type_id) {
+	case UAVCAN_PROTOCOL_FILE_READ_ID:
+	    *out_data_type_signature = UAVCAN_PROTOCOL_FILE_READ_SIGNATURE;
+	    return true;
+	}
+    }
+    if (transfer_type == CanardTransferTypeBroadcast) {
+        // see if we want to handle a specific broadcast packet
+        switch (data_type_id) {
+        case UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID: {
+            *out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_SIGNATURE;
+            return true;
+        }
+        }
+    }
+    // we don't want any other messages
+    return false;
 }

@@ -568,5 +568,8 @@ void DroneCAN::processRx()
         CANReceive(&CAN_rx_msg);
         const uint64_t timestamp = micros();
         int ret = canardHandleRxFrame(&canard, &CAN_rx_msg, timestamp);
+        if(ret < 0){
+            int a = 1;
+        }
     }
 }
