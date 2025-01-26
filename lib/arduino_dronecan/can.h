@@ -53,4 +53,4 @@ void CANSetFilters(uint16_t *ids, uint8_t num);
 void CANSetFilter(uint16_t id);
 bool CANInit(BITRATE bitrate, int remap);
 
-#endif //CAN_DRIVER
+#endif // CAN_DRIVER

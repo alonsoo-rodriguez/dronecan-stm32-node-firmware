@@ -7,7 +7,6 @@
 #define AF9 0x09
 #define AF10 0x0A
 
-
 CAN_bit_timing_config_t can_configs[6] = {{2, 13, 100}, {2, 13, 50}, {2, 13, 40}, {2, 13, 20}, {2, 13, 10}, {1, 8, 8}};
 
 /**
@@ -243,14 +242,13 @@ bool CANInit(BITRATE bitrate, int remap)
 }
 
 #define STM32_CAN_TIR_TXRQ (1U << 0U) // Bit 0: Transmit Mailbox Request
-#define STM32_CAN_RIR_RTR (1U << 1)  // Bit 1: Remote Transmission Request
-#define STM32_CAN_RIR_IDE (1U << 2)  // Bit 2: Identifier Extension
+#define STM32_CAN_RIR_RTR (1U << 1)   // Bit 1: Remote Transmission Request
+#define STM32_CAN_RIR_IDE (1U << 2)   // Bit 2: Identifier Extension
 #define STM32_CAN_TIR_RTR (1U << 1U)  // Bit 1: Remote Transmission Request
 #define STM32_CAN_TIR_IDE (1U << 2U)  // Bit 2: Identifier Extension
 
 #define CAN_EXT_ID_MASK 0x1FFFFFFFU
 #define CAN_STD_ID_MASK 0x000007FFU
-
 
 uint8_t dlcToDataLength(uint8_t dlc)
 {
@@ -258,19 +256,32 @@ uint8_t dlcToDataLength(uint8_t dlc)
     Data Length Code      9  10  11  12  13  14  15
     Number of data bytes 12  16  20  24  32  48  64
     */
-    if (dlc <= 8) {
+    if (dlc <= 8)
+    {
         return dlc;
-    } else if (dlc == 9) {
+    }
+    else if (dlc == 9)
+    {
         return 12;
-    } else if (dlc == 10) {
+    }
+    else if (dlc == 10)
+    {
         return 16;
-    } else if (dlc == 11) {
+    }
+    else if (dlc == 11)
+    {
         return 20;
-    } else if (dlc == 12) {
+    }
+    else if (dlc == 12)
+    {
         return 24;
-    } else if (dlc == 13) {
+    }
+    else if (dlc == 13)
+    {
         return 32;
-    } else if (dlc == 14) {
+    }
+    else if (dlc == 14)
+    {
         return 48;
     }
     return 64;
@@ -333,7 +344,7 @@ void CANSend(const CanardCANFrame *CAN_tx_msg)
     // }
     // else
     // {
-        // extended frame format
+    // extended frame format
     // force extended frame format
     out = ((CAN_tx_msg->id & CAN_EXT_ID_MASK) << 3U) | STM32_CAN_TIR_IDE;
     // }
@@ -354,7 +365,8 @@ void CANSend(const CanardCANFrame *CAN_tx_msg)
     CAN1->sTxMailBox[0].TIR = out | STM32_CAN_TIR_TXRQ;
 
     // Wait until the mailbox is empty
-    while (CAN1->sTxMailBox[0].TIR & 0x1UL && count++ < 1000000);
+    while (CAN1->sTxMailBox[0].TIR & 0x1UL && count++ < 1000000)
+        ;
 
     // The mailbox don't becomes empty while loop
     if (CAN1->sTxMailBox[0].TIR & 0x1UL)

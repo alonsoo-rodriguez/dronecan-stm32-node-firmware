@@ -30,7 +30,7 @@ void DroneCAN::init(CanardOnTransferReception onTransferReceived,
 
 uint8_t DroneCAN::get_preferred_node_id()
 {
-    if(parameters[0].value > 0 && parameters[0].value < 128)
+    if (parameters[0].value > 0 && parameters[0].value < 128)
     {
         return (uint8_t)parameters[0].value;
     }
@@ -64,7 +64,6 @@ uint64_t DroneCAN::micros64()
 {
     return (uint64_t)micros();
 }
-
 
 void DroneCAN::getUniqueID(uint8_t uniqueId[16])
 {
@@ -270,7 +269,7 @@ void DroneCAN::read_parameter_memory()
 
     for (uint16_t i = 0; i < ARRAY_SIZE(parameters); i++)
     {
-        EEPROM.get(i*4, p_val);
+        EEPROM.get(i * 4, p_val);
         p = &parameters[i];
         p->value = p_val;
     }
@@ -367,7 +366,6 @@ void DroneCAN::request_DNA()
     // See http://uavcan.org/Specification/6._Application_level_functions/#dynamic-node-id-allocation
     uint8_t allocation_request[CANARD_CAN_FRAME_MAX_DATA_LEN - 1];
     allocation_request[0] = (uint8_t)(this->get_preferred_node_id() << 1U);
-    //allocation_request[0] = 0;
 
     if (DNA.node_id_allocation_unique_id_offset == 0)
     {
@@ -586,7 +584,8 @@ void DroneCAN::processRx()
         int ret = canardHandleRxFrame(&canard, &CAN_rx_msg, timestamp);
         if (ret < 0)
         {
-            Serial.print("Canard RX fail"); Serial.println(ret);
+            Serial.print("Canard RX fail");
+            Serial.println(ret);
         }
     }
 }
