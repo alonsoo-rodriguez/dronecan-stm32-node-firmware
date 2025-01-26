@@ -28,6 +28,18 @@ void DroneCAN::init(CanardOnTransferReception onTransferReceived,
     this->read_parameter_memory();
 }
 
+uint8_t DroneCAN::get_preferred_node_id()
+{
+    if(parameters[0].value > 0 && parameters[0].value < 128)
+    {
+        return (uint8_t)parameters[0].value;
+    }
+    else
+    {
+        return PREFERRED_NODE_ID;
+    }
+}
+
 /*
 Processes any DroneCAN actions required. Call as quickly as practical !
 */
@@ -354,7 +366,7 @@ void DroneCAN::request_DNA()
     // Structure of the request is documented in the DSDL definition
     // See http://uavcan.org/Specification/6._Application_level_functions/#dynamic-node-id-allocation
     uint8_t allocation_request[CANARD_CAN_FRAME_MAX_DATA_LEN - 1];
-    allocation_request[0] = (uint8_t)(this->preferred_node_id << 1U);
+    allocation_request[0] = (uint8_t)(this->get_preferred_node_id() << 1U);
     //allocation_request[0] = 0;
 
     if (DNA.node_id_allocation_unique_id_offset == 0)
