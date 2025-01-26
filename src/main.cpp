@@ -30,13 +30,14 @@ void loop()
     if (now - looptime > 100)
     {
         looptime = millis();
-        
+
         // collect MCU core temperature data
         int32_t vref = __LL_ADC_CALC_VREFANALOG_VOLTAGE(analogRead(AVREF), LL_ADC_RESOLUTION_12B);
         int32_t cpu_temp = __LL_ADC_CALC_TEMPERATURE(vref, analogRead(ATEMP), LL_ADC_RESOLUTION_12B);
 
         // construct dronecan packet
         uavcan_equipment_power_BatteryInfo pkt {};
+        pkt.voltage = now/10000;
         pkt.temperature = cpu_temp;
 
         // boilerplate to send a message
@@ -109,7 +110,9 @@ void onTransferReceived(CanardInstance *ins, CanardRxTransfer *transfer)
         }
         case UAVCAN_PROTOCOL_RESTARTNODE_ID:
         {
-            while(1){}; // force the watchdog to reset
+            while (1)
+            {
+            }; // force the watchdog to reset
         }
         case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
         {
@@ -144,7 +147,51 @@ bool shouldAcceptTransfer(const CanardInstance *ins,
                           uint16_t data_type_id,
                           CanardTransferType transfer_type,
                           uint8_t source_node_id)
-{   // see https://github.com/dronecan/libcanard/blob/6f74bc67656882a4ee51966c7c0022d04fa1a3fb/examples/ServoNode/servo_node.c#L664
-    // for how to use properly
+
+
+{
+    if (transfer_type == CanardTransferTypeRequest) {
+        // check if we want to handle a specific service request
+        switch (data_type_id) {
+        case UAVCAN_PROTOCOL_GETNODEINFO_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_GETSET_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_SIGNATURE;
+            return true;
+        }
+	case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID: {
+	    *out_data_type_signature = UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_SIGNATURE;
+	    return true;
+	}
+        }
+    }
+    if (transfer_type == CanardTransferTypeResponse) {
+        // check if we want to handle a specific service request
+        switch (data_type_id) {
+	case UAVCAN_PROTOCOL_FILE_READ_ID:
+	    *out_data_type_signature = UAVCAN_PROTOCOL_FILE_READ_SIGNATURE;
+	    return true;
+	}
+    }
+    if (transfer_type == CanardTransferTypeBroadcast) {
+        // see if we want to handle a specific broadcast packet
+        switch (data_type_id) {
+        case UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID: {
+            *out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_ID: {
+            *out_data_type_signature = UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_SIGNATURE;
+            return true;
+        }
+        }
+    }
+
     return true;
 }

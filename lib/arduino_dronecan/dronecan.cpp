@@ -28,15 +28,25 @@ void DroneCAN::init(CanardOnTransferReception onTransferReceived,
     this->read_parameter_memory();
 }
 
+uint8_t DroneCAN::get_preferred_node_id()
+{
+    if(parameters[0].value > 0 && parameters[0].value < 128)
+    {
+        return (uint8_t)parameters[0].value;
+    }
+    else
+    {
+        return PREFERRED_NODE_ID;
+    }
+}
+
 /*
 Processes any DroneCAN actions required. Call as quickly as practical !
 */
 void DroneCAN::cycle()
 {
     const uint32_t now = millis();
-    this->processRx();
-    this->processTx();
-    this->request_DNA();
+
     if (now - this->looptime > 1000)
     {
         this->looptime = millis();
@@ -44,6 +54,10 @@ void DroneCAN::cycle()
         digitalWrite(19, this->led_state);
         this->led_state = !this->led_state;
     }
+
+    this->processRx();
+    this->processTx();
+    this->request_DNA();
 }
 
 uint64_t DroneCAN::micros64()
@@ -51,26 +65,31 @@ uint64_t DroneCAN::micros64()
     return (uint64_t)micros();
 }
 
-void DroneCAN::getUniqueID(uint8_t id[16])
+
+void DroneCAN::getUniqueID(uint8_t uniqueId[16])
 {
-    memset(id, 0, 16);
-    uint32_t cpuid = HAL_GetUIDw0();
-    id[0] = 0;
-    id[1] = 1;
-    id[2] = 2;
-    id[3] = 3;
-    id[4] = 4;
-    id[5] = 5;
-    id[6] = 6;
-    id[7] = 7;
-    id[8] = 8;
-    id[9] = 9;
-    id[10] = 10;
-    id[11] = 11;
-    id[12] = 12;
-    id[13] = 13;
-    id[14] = 14;
-    id[15] = 15;
+    memset(uniqueId, 0, 16);
+
+    uint32_t cpuid0 = HAL_GetUIDw0();
+    uint32_t cpuid1 = HAL_GetUIDw1();
+    uint32_t cpuid2 = HAL_GetUIDw2();
+
+    uniqueId[0] = (uint8_t)(cpuid0 >> 24);
+    uniqueId[1] = (uint8_t)(cpuid0 >> 16);
+    uniqueId[2] = (uint8_t)(cpuid0 >> 8);
+    uniqueId[3] = (uint8_t)(cpuid0);
+    uniqueId[4] = (uint8_t)(cpuid1 >> 24);
+    uniqueId[5] = (uint8_t)(cpuid1 >> 16);
+    uniqueId[6] = (uint8_t)(cpuid1 >> 8);
+    uniqueId[7] = (uint8_t)(cpuid1);
+    uniqueId[8] = (uint8_t)(cpuid2 >> 24);
+    uniqueId[9] = (uint8_t)(cpuid2 >> 16);
+    uniqueId[10] = (uint8_t)(cpuid2 >> 8);
+    uniqueId[11] = (uint8_t)(cpuid2);
+    uniqueId[12] = 0;
+    uniqueId[13] = 0;
+    uniqueId[14] = 0;
+    uniqueId[15] = 0;
 }
 
 void DroneCAN::handle_GetNodeInfo(CanardRxTransfer *transfer)
@@ -298,8 +317,8 @@ int DroneCAN::handle_DNA_Allocation(CanardRxTransfer *transfer)
         return 0;
     }
 
-    if (false)
-    //(msg.unique_id.len < sizeof(msg.unique_id.data))
+    if (msg.unique_id.len < sizeof(msg.unique_id.data))
+
     {
         // The allocator has confirmed part of unique ID, switching to
         // the next stage and updating the timeout.
@@ -347,7 +366,8 @@ void DroneCAN::request_DNA()
     // Structure of the request is documented in the DSDL definition
     // See http://uavcan.org/Specification/6._Application_level_functions/#dynamic-node-id-allocation
     uint8_t allocation_request[CANARD_CAN_FRAME_MAX_DATA_LEN - 1];
-    allocation_request[0] = (uint8_t)(this->preferred_node_id << 1U);
+    allocation_request[0] = (uint8_t)(this->get_preferred_node_id() << 1U);
+    //allocation_request[0] = 0;
 
     if (DNA.node_id_allocation_unique_id_offset == 0)
     {
@@ -507,7 +527,7 @@ void DroneCAN::send_NodeStatus(void)
     node_status.mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
     node_status.sub_mode = 0;
     // put whatever you like in here for display in GUI
-    node_status.vendor_specific_status_code = 1234;
+    node_status.vendor_specific_status_code = 0;
 
     /*
       when doing a firmware update put the size in kbytes in VSSC so
@@ -559,10 +579,14 @@ void DroneCAN::processTx()
 
 void DroneCAN::processRx()
 {
+    const uint64_t timestamp = micros();
     if (CANMsgAvail())
     {
         CANReceive(&CAN_rx_msg);
-        const uint64_t timestamp = micros();
         int ret = canardHandleRxFrame(&canard, &CAN_rx_msg, timestamp);
+        if (ret < 0)
+        {
+            Serial.print("Canard RX fail"); Serial.println(ret);
+        }
     }
 }

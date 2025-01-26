@@ -10,6 +10,8 @@
 #define C_TO_KELVIN(temp) (temp + 273.15f)
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+#define PREFERRED_NODE_ID 69
+
 class DroneCAN
 {
 protected:
@@ -40,10 +42,13 @@ protected:
         float max_value;
     };
 
+    // Returns the Node ID from parameter, if not set, returns the preferred node ID
+    uint8_t get_preferred_node_id();
+
 public:
     void init(CanardOnTransferReception onTransferReceived, CanardShouldAcceptTransfer shouldAcceptTransfer);
     int node_id = 0;
-    int preferred_node_id = 69;
+
 
     CanardInstance canard;
     parameter parameters[8] = {
