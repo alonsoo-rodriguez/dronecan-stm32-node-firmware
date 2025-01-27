@@ -74,7 +74,7 @@
 
 // On-board LED pin number
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN           PB3
+  #define LED_BUILTIN           PNUM_NOT_DEFINED
 #endif
 
 // On-board user button
@@ -87,10 +87,10 @@
   #define PIN_SPI_SS            PA4
 #endif
 #ifndef PIN_SPI_SS1
-  #define PIN_SPI_SS1           PB2
+  #define PIN_SPI_SS1           PA15
 #endif
 #ifndef PIN_SPI_SS2
-  #define PIN_SPI_SS2           PNUM_NOT_DEFINED
+  #define PIN_SPI_SS2           PB0
 #endif
 #ifndef PIN_SPI_SS3
   #define PIN_SPI_SS3           PNUM_NOT_DEFINED
@@ -99,18 +99,18 @@
   #define PIN_SPI_MOSI          PA7
 #endif
 #ifndef PIN_SPI_MISO
-  #define PIN_SPI_MISO          PB4
+  #define PIN_SPI_MISO          PA6
 #endif
 #ifndef PIN_SPI_SCK
-  #define PIN_SPI_SCK           PA5
+  #define PIN_SPI_SCK           PA1
 #endif
 
 // I2C definitions
 #ifndef PIN_WIRE_SDA
-  #define PIN_WIRE_SDA          PB14
+  #define PIN_WIRE_SDA          PA10
 #endif
 #ifndef PIN_WIRE_SCL
-  #define PIN_WIRE_SCL          PB13
+  #define PIN_WIRE_SCL          PA9
 #endif
 
 // Timer Definitions
