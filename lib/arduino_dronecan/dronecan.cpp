@@ -589,3 +589,134 @@ void DroneCAN::processRx()
         }
     }
 }
+
+void DroneCANonTransferReceived(DroneCAN &dronecan, CanardInstance *ins, CanardRxTransfer *transfer)
+{
+    if (transfer->transfer_type == CanardTransferTypeBroadcast)
+    {
+        // check if we want to handle a specific broadcast message
+        switch (transfer->data_type_id)
+        {
+        case UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_ID:
+        {
+            dronecan.handle_DNA_Allocation(transfer);
+            break;
+        }
+        }
+    }
+    // switch on data type ID to pass to the right handler function
+    else if (transfer->transfer_type == CanardTransferTypeRequest)
+    {
+        // check if we want to handle a specific service request
+        switch (transfer->data_type_id)
+        {
+        case UAVCAN_PROTOCOL_GETNODEINFO_ID:
+        {
+            dronecan.handle_GetNodeInfo(transfer);
+            break;
+        }
+        case UAVCAN_PROTOCOL_RESTARTNODE_ID:
+        {
+            while (1)
+            {
+            }; // force the watchdog to reset
+        }
+        case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
+        {
+            dronecan.handle_param_GetSet(transfer);
+            break;
+        }
+        case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
+        {
+            dronecan.handle_param_ExecuteOpcode(transfer);
+            break;
+        }
+        case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
+        {
+            dronecan.handle_begin_firmware_update(transfer);
+            break;
+        }
+        }
+    }
+}
+
+bool DroneCANshoudlAcceptTransfer(const CanardInstance *ins,
+                                  uint64_t *out_data_type_signature,
+                                  uint16_t data_type_id,
+                                  CanardTransferType transfer_type,
+                                  uint8_t source_node_id)
+{
+    if (transfer_type == CanardTransferTypeRequest)
+    {
+        // Check if we want to handle a specific service request
+        switch (data_type_id)
+        {
+        case UAVCAN_PROTOCOL_GETNODEINFO_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_FILE_READ_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_FILE_READ_SIGNATURE;
+            return true;
+        }
+        }
+    }
+
+    if (transfer_type == CanardTransferTypeResponse)
+    {
+        // Check if we want to handle a specific service response
+        switch (data_type_id)
+        {
+        case UAVCAN_PROTOCOL_FILE_READ_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_FILE_READ_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+            return true;
+        }
+        }
+    }
+
+    if (transfer_type == CanardTransferTypeBroadcast)
+    {
+        // Check if we want to handle a specific broadcast packet
+        switch (data_type_id)
+        {
+        case UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE;
+            return true;
+        }
+        case UAVCAN_PROTOCOL_DEBUG_KEYVALUE_ID:
+        {
+            *out_data_type_signature = UAVCAN_PROTOCOL_DEBUG_KEYVALUE_SIGNATURE;
+            return true;
+        }
+        }
+    }
+}
