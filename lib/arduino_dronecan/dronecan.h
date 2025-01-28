@@ -85,4 +85,10 @@ public:
     } DNA;
 };
 
+void DroneCANonTransferReceived(DroneCAN &dronecan, CanardInstance *ins, CanardRxTransfer *transfer);
+bool DroneCANshoudlAcceptTransfer(const CanardInstance *ins,
+                                  uint64_t *out_data_type_signature,
+                                  uint16_t data_type_id,
+                                  CanardTransferType transfer_type,
+                                  uint8_t source_node_id);
 #endif // ARDU_DRONECAN
