@@ -10,3 +10,6 @@
 [submodule "lib/ArduinoDroneCANlib"]
 	path = lib/ArduinoDroneCANlib
 	url = https://github.com/BeyondRobotix/ArduinoDroneCANlib.git
+[submodule "lib/libcanard"]
+	path = lib/libcanard
+	url = https://github.com/dronecan/libcanard.git
